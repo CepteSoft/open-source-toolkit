@@ -1,0 +1,68 @@
+# @ceptesoft/geo-link-parser
+
+Turns messy real-world location shares into a routable destination string:
+`"lat,lng"`, an address text, or `null`. Zero dependencies; short-link
+resolution uses an **injectable `fetch`** (defaults to `globalThis.fetch`),
+so it runs in Node, browsers, workers, and tests without network access.
+
+Extracted from production route-planning code (CepteCari), where customers
+paste whatever their phone gives them: WhatsApp shares, `maps.app.goo.gl`
+short links, `?q=` links, or plain coordinates.
+
+**Scope boundary:** parsing/resolution only — no geocoding of address text
+(pass the returned string to your geocoding or Distance Matrix API).
+
+## Install
+
+```bash
+npm install @ceptesoft/geo-link-parser
+```
+
+## Quickstart
+
+```ts
+import { normalizeLocation, parseLocationLink } from "@ceptesoft/geo-link-parser";
+
+// Sync parse of one link/text (no HTTP)
+parseLocationLink("https://www.google.com/maps/place/X/@39.75,30.49,13z"); // "39.75,30.49"
+parseLocationLink("https://www.google.com/maps?q=Eskisehir+Merkez");       // "Eskisehir Merkez"
+parseLocationLink("konum: 39.75,30.49");                                    // "39.75,30.49"
+
+// Full pipeline: stored coords win → short links resolved → parsed
+const destination = await normalizeLocation({
+  link: "https://maps.app.goo.gl/abc123",
+  latitude: null,
+  longitude: null,
+});
+// e.g. "39.75,30.49"
+```
+
+Inject a custom fetch (tests, proxies, non-standard runtimes):
+
+```ts
+const destination = await normalizeLocation(
+  { link: "https://goo.gl/xyz" },
+  { fetch: async (url, init) => myHttpClient.follow(url, init) }
+);
+```
+
+## API
+
+### `normalizeLocation(input, options?): Promise<string | null>`
+
+`input`: `{ link, latitude?, longitude? }`. Precedence: valid stored
+coordinates → link (short links resolved by following redirects, retrying
+with a mobile User-Agent when the first result is unparseable) → parse.
+
+`options`: `fetch` (`FetchLike`, default `globalThis.fetch`),
+`shortLinkHosts` (default `goo.gl` domains), `userAgents` (tried in order).
+
+### `parseLocationLink(urlString): string | null`
+
+Synchronous single-string parse. Precedence: path `@lat,lng` → `data=!3d!4d`
+→ path `lat,lng` → `ll=` → `q`/`query` (coords, else returned as address
+text) → hash → whole decoded text.
+
+### `isValidLatLng(lat, lng): boolean`
+
+WGS84 bounds + finiteness check.

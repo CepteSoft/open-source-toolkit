@@ -1,0 +1,39 @@
+{
+  "name": "@ceptesoft/distance-matrix-batch",
+  "version": "0.1.0",
+  "description": "Google Distance Matrix client with transparent batching around the 25-destination request cap, parallel dispatch, and typed { ok, error } results. Injectable fetch, zero dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "google-maps",
+    "distance-matrix",
+    "route-planning",
+    "batching",
+    "eta"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ceptesoft/open-source-toolkit",
+    "directory": "packages/distance-matrix-batch"
+  }
+}

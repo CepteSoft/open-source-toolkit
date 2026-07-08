@@ -1,0 +1,39 @@
+{
+  "name": "@ceptesoft/tz-day",
+  "version": "0.1.0",
+  "description": "Timezone-correct calendar day (YYYY-MM-DD) — fixes the UTC-midnight off-by-one in date-keyed planning and scheduling. Zero dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "timezone",
+    "date",
+    "iso",
+    "yyyy-mm-dd",
+    "calendar-day"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ceptesoft/open-source-toolkit",
+    "directory": "packages/tz-day"
+  }
+}

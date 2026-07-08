@@ -1,0 +1,39 @@
+{
+  "name": "@ceptesoft/geo-link-parser",
+  "version": "0.1.0",
+  "description": "Turns messy real-world location shares (WhatsApp, Google Maps links, short links) into a routable \"lat,lng\" or address string. Injectable fetch, zero dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "google-maps",
+    "geolocation",
+    "link-parser",
+    "coordinates",
+    "short-link"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ceptesoft/open-source-toolkit",
+    "directory": "packages/geo-link-parser"
+  }
+}

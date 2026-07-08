@@ -1,0 +1,40 @@
+{
+  "name": "@ceptesoft/local-first-store",
+  "version": "0.1.0",
+  "description": "Offline-first persistence plumbing: debounced and version-stamped storage decorators (zustand-persist compatible) plus keyed-collection upsert/remove helpers. Zero dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "offline-first",
+    "local-first",
+    "zustand",
+    "persist",
+    "storage",
+    "debounce"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ceptesoft/open-source-toolkit",
+    "directory": "packages/local-first-store"
+  }
+}

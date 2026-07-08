@@ -6,7 +6,18 @@ route planning, offline-first sync).
 
 ## Status
 
-🚧 **Scaffolding phase.** No packages have been extracted yet.
+✅ **All eight planned packages extracted** (v0.1.0, not yet published).
+
+| Package | What it does |
+|---|---|
+| [`@ceptesoft/phone-tr`](./packages/phone-tr) | Turkish phone normalization/validation |
+| [`@ceptesoft/money-utils`](./packages/money-utils) | Safe amount parsing, VAT math, currency registry |
+| [`@ceptesoft/async-result`](./packages/async-result) | `{ ok, error }` results + leak-proof loading wrapper |
+| [`@ceptesoft/tz-day`](./packages/tz-day) | Timezone-correct calendar day (`YYYY-MM-DD`) |
+| [`@ceptesoft/geo-link-parser`](./packages/geo-link-parser) | Maps/WhatsApp share links → `"lat,lng"` or address |
+| [`@ceptesoft/local-first-store`](./packages/local-first-store) | Debounced + versioned storage decorators, collection helpers |
+| [`@ceptesoft/distance-matrix-batch`](./packages/distance-matrix-batch) | Batched Google Distance Matrix client |
+| [`@ceptesoft/rate-limit-groups`](./packages/rate-limit-groups) | Declarative fail-open path-group rate limiting |
 
 - [PLAN.md](./PLAN.md) — extraction candidates and their source locations.
 - [RULES.md](./RULES.md) — the architectural constitution every package must follow.

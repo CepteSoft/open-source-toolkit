@@ -1,0 +1,39 @@
+{
+  "name": "@ceptesoft/rate-limit-groups",
+  "version": "0.1.0",
+  "description": "Declarative path-group rate limiting with a pluggable store and a documented fail-open contract — rate limiting must never take your app down. Zero dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "keywords": [
+    "rate-limit",
+    "sliding-window",
+    "middleware",
+    "fail-open",
+    "throttle"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ceptesoft/open-source-toolkit",
+    "directory": "packages/rate-limit-groups"
+  }
+}
