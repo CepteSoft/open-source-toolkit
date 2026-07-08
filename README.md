@@ -19,9 +19,6 @@ route planning, offline-first sync).
 | [`@ceptesoft/distance-matrix-batch`](./packages/distance-matrix-batch) | Batched Google Distance Matrix client |
 | [`@ceptesoft/rate-limit-groups`](./packages/rate-limit-groups) | Declarative fail-open path-group rate limiting |
 
-- [PLAN.md](./PLAN.md) — extraction candidates and their source locations.
-- [RULES.md](./RULES.md) — the architectural constitution every package must follow.
-
 ## Layout
 
 ```
