@@ -1,0 +1,23 @@
+{
+  "name": "open-source-toolkit",
+  "private": true,
+  "description": "CepteSoft open-source developer utilities — framework-agnostic TypeScript packages extracted from production ERP code.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  },
+  "packageManager": "npm@10.9.0",
+  "engines": {
+    "node": ">=20"
+  }
+}
