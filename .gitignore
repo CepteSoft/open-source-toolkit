@@ -7,5 +7,5 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
-README.md
+RULES.md
 PLAN.md
