@@ -157,6 +157,69 @@ describe("parseLocationLink", () => {
   });
 });
 
+describe("parseLocationLink — Yandex Maps (LON,LAT order)", () => {
+  it("swaps ll= (Yandex sends lon,lat — reverse of Google/Apple)", () => {
+    expect(parseLocationLink("https://yandex.com.tr/maps/?ll=30.49%2C39.75&z=13")).toBe(
+      "39.75,30.49"
+    );
+    expect(parseLocationLink("https://yandex.ru/maps/?ll=30.49,39.75")).toBe("39.75,30.49");
+  });
+
+  it("swaps pt= and whatshere[point]=", () => {
+    expect(parseLocationLink("https://yandex.com/maps/?pt=30.49,39.75")).toBe("39.75,30.49");
+    expect(
+      parseLocationLink("https://yandex.com/maps/?whatshere%5Bpoint%5D=30.49,39.75")
+    ).toBe("39.75,30.49");
+  });
+
+  it("does NOT swap ll= on non-Yandex hosts", () => {
+    expect(parseLocationLink("https://maps.google.com/?ll=39.75,30.49")).toBe("39.75,30.49");
+  });
+});
+
+describe("parseLocationLink — Apple Maps", () => {
+  it("parses ll= (lat,lng) with a label in q=", () => {
+    expect(parseLocationLink("https://maps.apple.com/?ll=39.75,30.49&q=Dropped%20Pin")).toBe(
+      "39.75,30.49"
+    );
+  });
+
+  it("parses coordinate= on /place links", () => {
+    expect(
+      parseLocationLink("https://maps.apple.com/place?coordinate=39.75,30.49&name=Ofis")
+    ).toBe("39.75,30.49");
+  });
+
+  it("falls back to address= text", () => {
+    expect(parseLocationLink("https://maps.apple.com/?address=Eskisehir%20Merkez")).toBe(
+      "Eskisehir Merkez"
+    );
+  });
+});
+
+describe("parseLocationLink — OpenStreetMap", () => {
+  it("parses #map=zoom/lat/lon hash", () => {
+    expect(parseLocationLink("https://www.openstreetmap.org/#map=15/39.75/30.49")).toBe(
+      "39.75,30.49"
+    );
+  });
+
+  it("prefers mlat/mlon marker params over the map hash", () => {
+    expect(
+      parseLocationLink("https://www.openstreetmap.org/?mlat=39.75&mlon=30.49#map=15/40.0/31.0")
+    ).toBe("39.75,30.49");
+  });
+
+  it("parses generic lat/lon query pairs", () => {
+    expect(parseLocationLink("https://example.com/point?lat=39.75&lon=30.49")).toBe(
+      "39.75,30.49"
+    );
+    expect(parseLocationLink("https://example.com/point?lat=39.75&lng=30.49")).toBe(
+      "39.75,30.49"
+    );
+  });
+});
+
 describe("isValidLatLng", () => {
   it("accepts in-range pairs", () => {
     expect(isValidLatLng(39.75, 30.49)).toBe(true);

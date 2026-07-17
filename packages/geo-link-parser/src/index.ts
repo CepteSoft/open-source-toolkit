@@ -4,7 +4,11 @@
  * Supported inputs: WhatsApp share links, Google Maps short links
  * (`goo.gl`, `maps.app.goo.gl` — resolved by following redirects),
  * `maps?q=` / `maps/search/?query=`, `/place/…/@lat,lng`, `ll=`,
- * `data=!3dLAT!4dLNG` params, and bare `lat,lng` text.
+ * `data=!3dLAT!4dLNG` params, Yandex Maps (`ll=`/`pt=`/`whatshere[point]=`,
+ * which are LON,LAT — reversed vs every other provider), Apple Maps
+ * (`ll=`, `coordinate=`, `address=`), OpenStreetMap (`mlat`/`mlon`,
+ * `#map=zoom/lat/lon`), generic `lat`/`lon` query pairs, and bare
+ * `lat,lng` text.
  *
  * Output: `"lat,lng"` | free-text address (usable as a geocoding/Distance
  * Matrix destination) | `null`.
@@ -129,6 +133,23 @@ export function parseLocationLink(urlString: string): string | null {
   try {
     const url = new URL(raw);
 
+    // 0) Yandex Maps: ll= / pt= / whatshere[point]= carry LON,LAT — the
+    // reverse of every other provider. Must be handled before the generic
+    // ll= step or the coordinates come back swapped.
+    if (/(^|\.)yandex\./.test(url.hostname)) {
+      const pair =
+        url.searchParams.get("whatshere[point]") ??
+        url.searchParams.get("pt") ??
+        url.searchParams.get("ll");
+      if (pair) {
+        const parts = pair.split(",").map((s) => s.trim());
+        if (parts.length >= 2) {
+          const out = toCoordString(parseFloat(parts[1]!), parseFloat(parts[0]!));
+          if (out) return out;
+        }
+      }
+    }
+
     // 1) Path: @lat,lng or @lat,lng,zoom (Google Maps place/share)
     const atMatch = url.pathname.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
     if (atMatch) {
@@ -150,18 +171,41 @@ export function parseLocationLink(urlString: string): string | null {
       if (out) return out;
     }
 
-    // 4) Query: ll=lat,lng
-    const ll = url.searchParams.get("ll");
-    if (ll) {
-      const parts = ll.split(",").map((s) => s.trim());
+    // 4) Query: ll=lat,lng (Google, Apple) or coordinate=lat,lng (Apple /place)
+    const llPair = url.searchParams.get("ll") ?? url.searchParams.get("coordinate");
+    if (llPair) {
+      const parts = llPair.split(",").map((s) => s.trim());
       if (parts.length >= 2) {
         const out = toCoordString(parseFloat(parts[0]!), parseFloat(parts[1]!));
         if (out) return out;
       }
     }
 
-    // 5) Query: q= or query= (coords "39.75,30.49" or an address)
-    const q = url.searchParams.get("q") ?? url.searchParams.get("query") ?? "";
+    // 4b) Split lat/lon query pairs: mlat/mlon (OpenStreetMap markers),
+    // lat/lon or lat/lng (OsmAnd and other generic tools)
+    const latParam = url.searchParams.get("mlat") ?? url.searchParams.get("lat");
+    const lonParam =
+      url.searchParams.get("mlon") ?? url.searchParams.get("lon") ?? url.searchParams.get("lng");
+    if (latParam && lonParam) {
+      const out = toCoordString(parseFloat(latParam), parseFloat(lonParam));
+      if (out) return out;
+    }
+
+    // 4c) Hash: #map=zoom/lat/lon (OpenStreetMap) — before the q= step so a
+    // search link with a map hash resolves to precise coordinates.
+    const osmHash = url.hash.match(/#map=\d+(?:\.\d+)?\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)/);
+    if (osmHash) {
+      const out = toCoordString(parseFloat(osmHash[1]!), parseFloat(osmHash[2]!));
+      if (out) return out;
+    }
+
+    // 5) Query: q= / query= (coords "39.75,30.49" or an address) or
+    // address= (Apple Maps)
+    const q =
+      url.searchParams.get("q") ??
+      url.searchParams.get("query") ??
+      url.searchParams.get("address") ??
+      "";
     const decoded = decodeURIComponent(q).trim();
     if (decoded) {
       const parts = decoded.split(",").map((s) => s.trim());

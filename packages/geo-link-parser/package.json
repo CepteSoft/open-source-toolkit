@@ -1,6 +1,6 @@
 {
   "name": "@ceptesoft/geo-link-parser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turns messy real-world location shares (WhatsApp, Google Maps links, short links) into a routable \"lat,lng\" or address string. Injectable fetch, zero dependencies.",
   "license": "MIT",
   "type": "module",
