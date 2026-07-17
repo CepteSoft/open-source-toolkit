@@ -1,7 +1,7 @@
 {
-  "name": "@ceptesoft/distance-matrix-batch",
+  "name": "@ceptesoft/route-optimize",
   "version": "0.1.0",
-  "description": "Google Distance Matrix client with transparent batching around the 25-destination request cap, parallel dispatch, and typed { ok, error } results. Injectable fetch, zero dependencies.",
+  "description": "API-less route optimization: nearest-neighbor + 2-opt open tour over haversine distances, plus a keyless Google Maps directions URL builder. Pure, synchronous, zero dependencies.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,16 +25,18 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "keywords": [
+    "route-optimization",
+    "tsp",
+    "2-opt",
+    "nearest-neighbor",
+    "haversine",
     "google-maps",
-    "distance-matrix",
-    "route-planning",
-    "batching",
-    "eta"
+    "waypoints"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/ceptesoft/open-source-toolkit",
-    "directory": "packages/distance-matrix-batch"
+    "directory": "packages/route-optimize"
   },
   "publishConfig": {
     "access": "public"

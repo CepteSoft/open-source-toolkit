@@ -6,7 +6,8 @@ route planning, offline-first sync).
 
 ## Status
 
-✅ **All eight planned packages extracted** (v0.1.0, not yet published).
+✅ **All eight planned packages extracted** (v0.1.0, not yet published),
+plus `route-optimize` added after the initial plan.
 
 | Package | What it does |
 |---|---|
@@ -18,6 +19,7 @@ route planning, offline-first sync).
 | [`@ceptesoft/local-first-store`](./packages/local-first-store) | Debounced + versioned storage decorators, collection helpers |
 | [`@ceptesoft/distance-matrix-batch`](./packages/distance-matrix-batch) | Batched Google Distance Matrix client |
 | [`@ceptesoft/rate-limit-groups`](./packages/rate-limit-groups) | Declarative fail-open path-group rate limiting |
+| [`@ceptesoft/route-optimize`](./packages/route-optimize) | API-less stop ordering (NN + 2-opt) + keyless Maps directions URL |
 
 ## Layout
 

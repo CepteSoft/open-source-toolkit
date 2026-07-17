@@ -35,5 +35,8 @@
     "type": "git",
     "url": "https://github.com/ceptesoft/open-source-toolkit",
     "directory": "packages/geo-link-parser"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
