@@ -19,7 +19,7 @@ plus `route-optimize` added after the initial plan.
 | [`@ceptesoft/local-first-store`](./packages/local-first-store) | Debounced + versioned storage decorators, collection helpers |
 | [`@ceptesoft/distance-matrix-batch`](./packages/distance-matrix-batch) | Batched Google Distance Matrix client |
 | [`@ceptesoft/rate-limit-groups`](./packages/rate-limit-groups) | Declarative fail-open path-group rate limiting |
-| [`@ceptesoft/route-optimize`](./packages/route-optimize) | API-less stop ordering (NN + 2-opt) + keyless Maps directions URL |
+| [`@ceptesoft/route-optimize`](./packages/route-optimize) | Zero-API-cost stop ordering (NN + 2-opt) + keyless handoff to Google/Apple/Yandex/Waze |
 
 ## Layout
 

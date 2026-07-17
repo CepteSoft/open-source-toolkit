@@ -1,20 +1,23 @@
 # @ceptesoft/route-optimize
 
-API-less route optimization for field sales / delivery runs: solves the stop
-order locally with **nearest-neighbor + 2-opt** over as-the-crow-flies
-(haversine) distances, then hands actual driving off to the Google Maps app
-through its **keyless directions URL scheme**. Everything is pure and
-synchronous — no network, no API key, zero dependencies — so it runs in
-browsers, Node, and workers, and stays trivially testable.
+**Zero-API-cost route planning** for field sales / delivery runs: solves the
+stop order locally with **nearest-neighbor + 2-opt** over as-the-crow-flies
+(haversine) distances, then hands actual driving off to the driver's own
+navigation app — **Google Maps, Apple Maps, Yandex Maps, or Waze** — through
+their keyless URL schemes. No Directions API, no key, no quota, no billing
+surprise. Everything is pure and synchronous — zero dependencies — so it runs
+in browsers, Node, and workers, and stays trivially testable.
 
 Extracted from production ERP route-planning code (CepteCari), where a
-salesperson picks the day's customers and gets a "optimize my route" button
+salesperson picks the day's customers and gets an "optimize my route" button
 that must work offline and without a paid Directions API quota.
 
 **Scope boundary:** distances are great-circle approximations, good for
 *ordering* stops — not for road ETAs or turn-by-turn. For real road
 distances/ETAs compose with `@ceptesoft/distance-matrix-batch`; for parsing
 messy shared location links into coordinates, `@ceptesoft/geo-link-parser`.
+The parse → optimize → navigate chain covers the whole field-routing flow
+without a single API call.
 
 ## Install
 
@@ -85,14 +88,38 @@ Total great-circle length of the ordered tour: origin → s0 → s1 → …
 `options.locale` (BCP 47, default `"en-US"`) controls the decimal separator:
 `formatApproxKm(3400, { locale: "tr-TR" })` → `"~3,4 km"`.
 
+### `buildNavDirUrl(target, origin, orderedStops): MapsDirUrl | null`
+
+Keyless directions URL for a navigation app, visiting the stops **in the
+given order** (no app re-optimizes — ordering is `solveTour`'s job).
+`target` is a `NavTarget`: `"google" | "apple" | "yandex" | "waze"`. Returns
+`{ url, includedCount, totalCount }`, or `null` for an empty stop list.
+
+Each app has a stop limit (`NAV_STOP_LIMITS`); stops beyond it are cut and
+`includedCount < totalCount` tells you so:
+
+| target | limit | notes |
+|---|---|---|
+| `google` | 10 | 9 waypoints + destination (`maps/dir/?api=1`) |
+| `yandex` | 10 | `rtext` chained points; conservative cap — Yandex publishes no official limit |
+| `apple` | 1 | `maps.apple.com` has no official multi-stop URL; use `buildNavLegUrls` |
+| `waze` | 1 | Waze deep links navigate to one place and always start from the device's current location (`origin` is ignored) |
+
+### `buildNavLegUrls(target, origin, orderedStops): string[]`
+
+Stop-by-stop handoff: one URL per leg (`origin → s0`, `s0 → s1`, …) in tour
+order — the driver opens the next link after each visit. This is the
+practical mode for Apple Maps and Waze, and works for every target.
+
+```ts
+const legs = buildNavLegUrls("waze", origin, ordered);
+// legs[0] → first customer, legs[1] → second, …
+```
+
 ### `buildGoogleMapsDirUrl(origin, orderedStops): MapsDirUrl | null`
 
-Builds a keyless `https://www.google.com/maps/dir/?api=1&…` URL that
-navigates the stops **in the given order** (Maps does not re-optimize —
-ordering is `solveTour`'s job). Google's scheme caps a route at
-`MAX_MAPS_STOPS` (10) stops: beyond that the first 10 are included, the last
-of them becomes the destination and the rest waypoints. Returns
-`{ url, includedCount, totalCount }`, or `null` for an empty stop list.
+Shorthand for `buildNavDirUrl("google", origin, orderedStops)`, kept as a
+named export.
 
 ## Migration notes (from CepteCari `lib/route-optimize.ts`)
 

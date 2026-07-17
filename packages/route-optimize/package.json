@@ -1,6 +1,6 @@
 {
   "name": "@ceptesoft/route-optimize",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "API-less route optimization: nearest-neighbor + 2-opt open tour over haversine distances, plus a keyless Google Maps directions URL builder. Pure, synchronous, zero dependencies.",
   "license": "MIT",
   "type": "module",

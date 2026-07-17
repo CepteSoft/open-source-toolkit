@@ -6,7 +6,10 @@ import {
   approxTourMeters,
   formatApproxKm,
   buildGoogleMapsDirUrl,
+  buildNavDirUrl,
+  buildNavLegUrls,
   MAX_MAPS_STOPS,
+  NAV_STOP_LIMITS,
   type LatLng,
   type RouteStop,
 } from "./index.js";
@@ -145,5 +148,89 @@ describe("buildGoogleMapsDirUrl", () => {
     expect(url.searchParams.get("waypoints")!.split("|")).toHaveLength(MAX_MAPS_STOPS - 1);
     // Destination = the 10th stop in order (index 9)
     expect(url.searchParams.get("destination")).toBe(`${39 + 9 * 0.1},30`);
+  });
+});
+
+describe("buildNavDirUrl", () => {
+  const origin: LatLng = { lat: 41, lng: 29 };
+  const stop = (lat: number): LatLng => ({ lat, lng: 30 });
+
+  it("empty list → null for every target", () => {
+    for (const target of ["google", "apple", "yandex", "waze"] as const) {
+      expect(buildNavDirUrl(target, origin, [])).toBeNull();
+    }
+  });
+
+  it('"google" matches buildGoogleMapsDirUrl', () => {
+    const stops = [stop(39.1), stop(39.2)];
+    expect(buildNavDirUrl("google", origin, stops)).toEqual(buildGoogleMapsDirUrl(origin, stops));
+  });
+
+  it('"yandex": origin + stops chained in rtext, rtt=auto', () => {
+    const result = buildNavDirUrl("yandex", origin, [stop(39.1), stop(39.2), stop(39.3)]);
+    const url = new URL(result!.url);
+    expect(url.hostname).toBe("yandex.com");
+    expect(url.searchParams.get("mode")).toBe("routes");
+    expect(url.searchParams.get("rtt")).toBe("auto");
+    expect(url.searchParams.get("rtext")).toBe("41,29~39.1,30~39.2,30~39.3,30");
+    expect(result!.includedCount).toBe(3);
+  });
+
+  it('"yandex": 12 stops truncated to its limit (origin + 10 points in rtext)', () => {
+    const stops = Array.from({ length: 12 }, (_, i) => stop(39 + i * 0.1));
+    const result = buildNavDirUrl("yandex", origin, stops);
+    expect(result!.includedCount).toBe(NAV_STOP_LIMITS.yandex);
+    expect(result!.totalCount).toBe(12);
+    const url = new URL(result!.url);
+    expect(url.searchParams.get("rtext")!.split("~")).toHaveLength(NAV_STOP_LIMITS.yandex + 1);
+  });
+
+  it('"apple": single destination = FIRST stop, saddr origin, driving flag', () => {
+    const result = buildNavDirUrl("apple", origin, [stop(39.1), stop(39.2)]);
+    const url = new URL(result!.url);
+    expect(url.hostname).toBe("maps.apple.com");
+    expect(url.searchParams.get("saddr")).toBe("41,29");
+    expect(url.searchParams.get("daddr")).toBe("39.1,30");
+    expect(url.searchParams.get("dirflg")).toBe("d");
+    expect(result!.includedCount).toBe(1);
+    expect(result!.totalCount).toBe(2);
+  });
+
+  it('"waze": single destination = FIRST stop, no origin (starts from current location)', () => {
+    const result = buildNavDirUrl("waze", origin, [stop(39.1), stop(39.2)]);
+    const url = new URL(result!.url);
+    expect(url.hostname).toBe("waze.com");
+    expect(url.pathname).toBe("/ul");
+    expect(url.searchParams.get("ll")).toBe("39.1,30");
+    expect(url.searchParams.get("navigate")).toBe("yes");
+    expect(url.searchParams.get("from")).toBeNull();
+    expect(result!.includedCount).toBe(1);
+  });
+});
+
+describe("buildNavLegUrls", () => {
+  const origin: LatLng = { lat: 41, lng: 29 };
+  const stop = (lat: number): LatLng => ({ lat, lng: 30 });
+
+  it("empty stops → empty array", () => {
+    expect(buildNavLegUrls("google", origin, [])).toEqual([]);
+  });
+
+  it("one URL per leg, chained origins (google)", () => {
+    const urls = buildNavLegUrls("google", origin, [stop(39.1), stop(39.2)]);
+    expect(urls).toHaveLength(2);
+    const first = new URL(urls[0]!);
+    expect(first.searchParams.get("origin")).toBe("41,29");
+    expect(first.searchParams.get("destination")).toBe("39.1,30");
+    const second = new URL(urls[1]!);
+    expect(second.searchParams.get("origin")).toBe("39.1,30");
+    expect(second.searchParams.get("destination")).toBe("39.2,30");
+  });
+
+  it("waze legs carry only the destination", () => {
+    const urls = buildNavLegUrls("waze", origin, [stop(39.1), stop(39.2)]);
+    expect(urls).toHaveLength(2);
+    expect(new URL(urls[0]!).searchParams.get("ll")).toBe("39.1,30");
+    expect(new URL(urls[1]!).searchParams.get("ll")).toBe("39.2,30");
   });
 });

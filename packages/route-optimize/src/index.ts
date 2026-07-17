@@ -1,9 +1,10 @@
 /**
- * API-less route optimization: builds an open tour (starts at the origin, no
+ * Zero-API-cost route planning: builds an open tour (starts at the origin, no
  * return leg) over as-the-crow-flies (haversine) distances using
  * nearest-neighbor construction + 2-opt improvement. No mapping API is
  * called — stop ordering is solved here; actual driving is handed off to the
- * Google Maps app via its keyless URL scheme.
+ * driver's navigation app (Google Maps, Apple Maps, Yandex Maps, Waze) via
+ * keyless URL schemes.
  *
  * Extracted from production route-planning code. Everything is pure and
  * synchronous, so it runs in browsers, Node, and workers alike. Deliberately
@@ -137,39 +138,118 @@ export function formatApproxKm(meters: number, options: FormatApproxKmOptions = 
 
 export type MapsDirUrl = {
   url: string;
-  /** Number of stops included in the URL (at most `MAX_MAPS_STOPS`). */
+  /** Number of stops included in the URL (at most the target app's stop limit). */
   includedCount: number;
   totalCount: number;
 };
 
+/** Navigation apps a route can be handed off to via a keyless URL. */
+export type NavTarget = "google" | "apple" | "yandex" | "waze";
+
 /**
- * Keyless Google Maps directions URL that navigates the stops in the GIVEN
- * order (Maps does not re-optimize — ordering is `solveTour`'s job). When the
- * stop limit is exceeded, the first `MAX_MAPS_STOPS` stops are used; the last
- * one becomes the destination, the rest become waypoints. Returns `null` for
- * an empty stop list.
+ * Max stops each app accepts in a single directions URL.
+ * - `google`: 9 waypoints + 1 destination.
+ * - `yandex`: conservative cap — Yandex does not publish an official limit.
+ * - `apple`/`waze`: their URL schemes navigate to a single destination; for
+ *   multi-stop runs use `buildNavLegUrls` (one URL per leg).
+ */
+export const NAV_STOP_LIMITS: Record<NavTarget, number> = {
+  google: 10,
+  yandex: 10,
+  apple: 1,
+  waze: 1,
+};
+
+const toParam = (p: LatLng) => `${p.lat},${p.lng}`;
+
+/**
+ * Keyless directions URL for the given navigation app, visiting the stops in
+ * the GIVEN order (no app re-optimizes — ordering is `solveTour`'s job). When
+ * the app's stop limit is exceeded, the first `NAV_STOP_LIMITS[target]` stops
+ * are used; the last of them becomes the destination, the rest waypoints.
+ * Returns `null` for an empty stop list.
+ *
+ * Note: Waze URLs cannot express a starting point — navigation always starts
+ * from the device's current location, so `origin` is ignored for `"waze"`.
+ */
+export function buildNavDirUrl(
+  target: NavTarget,
+  origin: LatLng,
+  orderedStops: readonly LatLng[]
+): MapsDirUrl | null {
+  if (orderedStops.length === 0) return null;
+  const included = orderedStops.slice(0, NAV_STOP_LIMITS[target]);
+  const destination = included[included.length - 1]!;
+  let url: string;
+
+  switch (target) {
+    case "google": {
+      const params = new URLSearchParams({
+        api: "1",
+        origin: toParam(origin),
+        destination: toParam(destination),
+        travelmode: "driving",
+      });
+      const waypoints = included.slice(0, -1);
+      if (waypoints.length > 0) params.set("waypoints", waypoints.map(toParam).join("|"));
+      url = `https://www.google.com/maps/dir/?${params.toString()}`;
+      break;
+    }
+    case "yandex": {
+      const params = new URLSearchParams({
+        mode: "routes",
+        rtext: [origin, ...included].map(toParam).join("~"),
+        rtt: "auto",
+      });
+      url = `https://yandex.com/maps/?${params.toString()}`;
+      break;
+    }
+    case "apple": {
+      const params = new URLSearchParams({
+        saddr: toParam(origin),
+        daddr: toParam(destination),
+        dirflg: "d",
+      });
+      url = `https://maps.apple.com/?${params.toString()}`;
+      break;
+    }
+    case "waze": {
+      const params = new URLSearchParams({ ll: toParam(destination), navigate: "yes" });
+      url = `https://waze.com/ul?${params.toString()}`;
+      break;
+    }
+  }
+
+  return { url, includedCount: included.length, totalCount: orderedStops.length };
+}
+
+/**
+ * Keyless Google Maps directions URL — equivalent to
+ * `buildNavDirUrl("google", origin, orderedStops)`, kept as a named export.
  */
 export function buildGoogleMapsDirUrl(
   origin: LatLng,
   orderedStops: readonly LatLng[]
 ): MapsDirUrl | null {
-  if (orderedStops.length === 0) return null;
-  const included = orderedStops.slice(0, MAX_MAPS_STOPS);
-  const toParam = (p: LatLng) => `${p.lat},${p.lng}`;
-  const destination = included[included.length - 1]!;
-  const waypoints = included.slice(0, -1);
+  return buildNavDirUrl("google", origin, orderedStops);
+}
 
-  const params = new URLSearchParams({
-    api: "1",
-    origin: toParam(origin),
-    destination: toParam(destination),
-    travelmode: "driving",
-  });
-  if (waypoints.length > 0) params.set("waypoints", waypoints.map(toParam).join("|"));
-
-  return {
-    url: `https://www.google.com/maps/dir/?${params.toString()}`,
-    includedCount: included.length,
-    totalCount: orderedStops.length,
-  };
+/**
+ * Stop-by-stop handoff: one navigation URL per leg (origin → s0, s0 → s1, …),
+ * in tour order. This is the practical mode for apps without multi-stop URL
+ * support (Apple Maps, Waze) and mirrors real field use — the driver opens
+ * the next leg after finishing each visit. Works for every `NavTarget`.
+ */
+export function buildNavLegUrls(
+  target: NavTarget,
+  origin: LatLng,
+  orderedStops: readonly LatLng[]
+): string[] {
+  const urls: string[] = [];
+  let from = origin;
+  for (const to of orderedStops) {
+    urls.push(buildNavDirUrl(target, from, [to])!.url);
+    from = to;
+  }
+  return urls;
 }
