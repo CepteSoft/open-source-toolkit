@@ -3,6 +3,8 @@ import {
   normalizePhone,
   parsePhone,
   isValidPhone,
+  getLineType,
+  formatPhone,
   DEFAULT_INVALID_MESSAGE,
 } from "./index.js";
 
@@ -76,5 +78,48 @@ describe("isValidPhone", () => {
   it("returns false for wrong length or prefix", () => {
     expect(isValidPhone("0532111")).toBe(false);
     expect(isValidPhone("15321112233")).toBe(false);
+  });
+});
+
+describe("getLineType", () => {
+  it("5xx → mobile (any accepted input form)", () => {
+    expect(getLineType("05321112233")).toBe("mobile");
+    expect(getLineType("+90 532 111 22 33")).toBe("mobile");
+    expect(getLineType("5051112233")).toBe("mobile");
+  });
+
+  it("2xx/3xx/4xx → landline", () => {
+    expect(getLineType("02125550000")).toBe("landline");
+    expect(getLineType("03122220000")).toBe("landline");
+    expect(getLineType("04421110000")).toBe("landline");
+  });
+
+  it("850 corporate, 800 tollfree, 900 premium", () => {
+    expect(getLineType("08501234567")).toBe("corporate");
+    expect(getLineType("08001234567")).toBe("tollfree");
+    expect(getLineType("09001234567")).toBe("premium");
+  });
+
+  it("valid but unclassified range → unknown", () => {
+    expect(getLineType("08221234567")).toBe("unknown");
+  });
+
+  it("invalid input → null", () => {
+    expect(getLineType("0532 111")).toBeNull();
+    expect(getLineType(null)).toBeNull();
+    expect(getLineType("")).toBeNull();
+  });
+});
+
+describe("formatPhone", () => {
+  it("formats as 0XXX XXX XX XX", () => {
+    expect(formatPhone("05321112233")).toBe("0532 111 22 33");
+    expect(formatPhone("+905321112233")).toBe("0532 111 22 33");
+    expect(formatPhone("02125550000")).toBe("0212 555 00 00");
+  });
+
+  it("invalid input → null", () => {
+    expect(formatPhone("532")).toBeNull();
+    expect(formatPhone(null)).toBeNull();
   });
 });

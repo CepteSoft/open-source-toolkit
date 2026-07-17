@@ -69,3 +69,48 @@ export function parsePhone(
   }
   return { value: normalized, error: null };
 }
+
+/**
+ * Line type derived from the Turkish national numbering plan:
+ * `5xx` mobile, `2xx`/`3xx`/`4xx` geographic landline, `850` nongeographic
+ * corporate/VoIP, `800` toll-free, `900` premium-rate.
+ *
+ * Deliberately NOT operator detection: Turkey has had mobile number
+ * portability since 2008, so a prefix only tells the original allocation,
+ * not the subscriber's current operator.
+ */
+export type PhoneLineType =
+  | "mobile"
+  | "landline"
+  | "corporate"
+  | "tollfree"
+  | "premium"
+  | "unknown";
+
+/**
+ * Classifies a phone by line type. Accepts anything {@link normalizePhone}
+ * accepts; returns `null` when the input does not normalize to a valid
+ * number, `"unknown"` for valid-but-unclassified ranges.
+ */
+export function getLineType(input: string | null | undefined): PhoneLineType | null {
+  const normalized = normalizePhone(input);
+  if (!isValidPhone(normalized)) return null;
+  const first = normalized[1];
+  if (first === "5") return "mobile";
+  if (first === "2" || first === "3" || first === "4") return "landline";
+  const prefix = normalized.slice(1, 4);
+  if (prefix === "850") return "corporate";
+  if (prefix === "800") return "tollfree";
+  if (prefix === "900") return "premium";
+  return "unknown";
+}
+
+/**
+ * Formats for display as `0XXX XXX XX XX` (e.g. `0532 111 22 33`).
+ * Returns `null` when the input does not normalize to a valid number.
+ */
+export function formatPhone(input: string | null | undefined): string | null {
+  const normalized = normalizePhone(input);
+  if (!isValidPhone(normalized)) return null;
+  return `${normalized.slice(0, 4)} ${normalized.slice(4, 7)} ${normalized.slice(7, 9)} ${normalized.slice(9, 11)}`;
+}

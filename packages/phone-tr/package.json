@@ -1,6 +1,6 @@
 {
   "name": "@ceptesoft/phone-tr",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turkish phone number normalization and validation (05XXXXXXXXX canonical form). Zero dependencies.",
   "license": "MIT",
   "type": "module",
